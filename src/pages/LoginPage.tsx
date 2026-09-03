@@ -63,7 +63,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <Shield size={24} />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white">SecureDocX Portal</h1>
+            <h1 className="font-bold text-lg text-white">IndiaLex Portal</h1>
             <p className="text-xs text-slate-400">NCRB · Departmental Evidence Ledger</p>
           </div>
         </div>

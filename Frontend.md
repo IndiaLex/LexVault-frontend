@@ -1,4 +1,4 @@
-# SecureDocX · Frontend Developer Handoff Guide
+# IndiaLex · Frontend Developer Handoff Guide
 
 **Repository:** `IndiaLex/lexvault-frontend`  
 **Active Branch:** `maria`  

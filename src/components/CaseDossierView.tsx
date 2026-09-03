@@ -173,7 +173,7 @@ export const CaseDossierView: React.FC<CaseDossierViewProps> = ({ dossier, user,
                     </span>
                   </p>
                   <div className="text-[11px] text-red-700 bg-red-100 p-2.5 rounded mt-2 border border-red-200 leading-relaxed">
-                    <strong>Statutory Safeguard:</strong> Disclosing victim identity in police reports or court bundles is a punishable offense. SecureDocX automatically masks all statements before export.
+                    <strong>Statutory Safeguard:</strong> Disclosing victim identity in police reports or court bundles is a punishable offense. IndiaLex automatically masks all statements before export.
                   </div>
                 </div>
               </div>

@@ -263,12 +263,12 @@ export const CaseDetailPage: React.FC = () => {
           )}
 
           {activeMenu === 'graph' && (
-            <div className="space-y-3">
-              <div className="flex justify-between items-center bg-white p-3 border border-slate-300 rounded shadow-2xs">
+            <div className="space-y-4">
+              <div className="flex flex-wrap justify-between items-center bg-white p-3 border border-slate-200 rounded-xl shadow-xs gap-3">
                 <div className="flex items-center gap-2">
                   <Activity size={16} className="text-[#0b2247]" />
                   <span className="text-xs font-bold text-slate-800">
-                    Visual Evidence Provenance DAG (Click any node to open cryptographic inspector)
+                    Visual Evidence Provenance & Custody Graph (Click any stage node to inspect cryptographic proofs)
                   </span>
                 </div>
 
@@ -279,18 +279,19 @@ export const CaseDetailPage: React.FC = () => {
                   <select
                     value={selectedTypeFilter}
                     onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                    className="border border-slate-300 rounded px-2 py-1 bg-white text-xs text-slate-700"
+                    className="border border-slate-300 rounded px-2.5 py-1 bg-white text-xs text-slate-700 font-medium"
                   >
                     <option value="ALL">All Events ({graphData?.nodes.length || 0})</option>
                     <option value="UPLOAD">UPLOAD</option>
                     <option value="OCR_COMPLETE">OCR_COMPLETE</option>
                     <option value="REDACTED">REDACTED</option>
                     <option value="ANCHORED">ANCHORED</option>
+                    <option value="VERIFIED">VERIFIED</option>
                   </select>
                 </div>
               </div>
 
-              <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 shadow-inner">
+              <div>
                 {graphData && (
                   <CaseGraphView
                     nodes={filteredNodes}

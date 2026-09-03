@@ -25,7 +25,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({
           <span>Ministry of Home Affairs · National Crime Records Bureau (NCRB)</span>
         </div>
         <div className="flex items-center gap-4 text-[10px] font-mono">
-          <span>PORTAL: SECUREDOCX / POLICE CASENET</span>
+          <span>PORTAL: INDIALEX / POLICE CASENET</span>
           <span>LOCATION: DELHI STATE POLICE CLOUD</span>
         </div>
       </div>

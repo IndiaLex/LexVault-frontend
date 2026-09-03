@@ -192,7 +192,7 @@ export const CaseListPage: React.FC<CaseListPageProps> = ({ user }) => {
             <span>Ministry of Home Affairs · National Crime Records Bureau (NCRB)</span>
           </div>
           <div className="flex items-center gap-4 text-[10px] font-mono">
-            <span>PORTAL: SECUREDOCX / POLICE CASENET</span>
+            <span>PORTAL: INDIALEX / POLICE CASENET</span>
             <span>NATIONAL CUSTODY REGISTRY</span>
           </div>
         </div>
