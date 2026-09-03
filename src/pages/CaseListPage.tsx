@@ -205,7 +205,7 @@ export const CaseListPage: React.FC<CaseListPageProps> = ({ user }) => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-serif font-bold text-base tracking-wide text-white">
-                  SecureDocX Case Docket Register
+                  IndiaLex Case Docket Register
                 </h1>
                 <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-semibold uppercase">
                   State Case Registry

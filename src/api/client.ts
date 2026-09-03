@@ -13,8 +13,48 @@ import type {
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const getHeaders = () => {
+export const isTokenValid = (): boolean => {
   const token = localStorage.getItem('auth_token');
+  if (!token) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      localStorage.removeItem('auth_token');
+      return false;
+    }
+    const payload = JSON.parse(atob(parts[1]));
+    if (payload.exp && payload.exp * 1000 <= Date.now() + 5000) {
+      localStorage.removeItem('auth_token');
+      return false;
+    }
+    return true;
+  } catch {
+    localStorage.removeItem('auth_token');
+    return false;
+  }
+};
+
+export const getAuthToken = (): string | null => {
+  if (!isTokenValid()) return null;
+  return localStorage.getItem('auth_token');
+};
+
+const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  if (localStorage.getItem('auth_token') && !isTokenValid()) {
+    localStorage.removeItem('auth_token');
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    localStorage.removeItem('auth_token');
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+  return res;
+};
+
+const getHeaders = () => {
+  const token = getAuthToken();
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -50,6 +90,8 @@ const roleMeta: Record<string, { designation: string; policeStation: string; bad
 };
 
 export const realClient = {
+  isTokenValid,
+
   login: async (username: string, password: string): Promise<LoginResponse> => {
     const res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
@@ -67,10 +109,11 @@ export const realClient = {
 
   logout: () => {
     localStorage.removeItem('auth_token');
+    window.dispatchEvent(new Event('auth:unauthorized'));
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/auth/me`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/auth/me`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch authenticated session');
     const data = await res.json();
     const meta = roleMeta[data.role] || roleMeta.officer;
@@ -86,7 +129,7 @@ export const realClient = {
   },
 
   getCases: async (): Promise<CaseSummary[]> => {
-    const res = await fetch(`${BASE_URL}/cases`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/cases`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to load cases');
     const cases = await res.json();
     return cases.map((c: any) => ({
@@ -109,7 +152,7 @@ export const realClient = {
 
   createCase: async (payload: CaseCreatePayload | string): Promise<CaseSummary> => {
     const body = typeof payload === 'string' ? { title: payload } : payload;
-    const res = await fetch(`${BASE_URL}/cases`, {
+    const res = await authFetch(`${BASE_URL}/cases`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(body),
@@ -122,19 +165,19 @@ export const realClient = {
   },
 
   getCase: async (caseId: string): Promise<CaseSummary> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}`, { headers: getHeaders() });
     if (!res.ok) throw new Error(`Failed to load case ${caseId}`);
     return res.json();
   },
 
   getCaseDossier: async (caseId: string): Promise<CaseDossier> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/dossier`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/dossier`, { headers: getHeaders() });
     if (!res.ok) throw new Error(`Failed to fetch case dossier for ${caseId}`);
     return res.json();
   },
 
   updateCaseDossier: async (caseId: string, dossier: CaseDossier): Promise<CaseDossier> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/dossier`, {
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/dossier`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify({ dossier }),
@@ -144,13 +187,13 @@ export const realClient = {
   },
 
   getCaseDocuments: async (caseId: string): Promise<DocumentItem[]> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/documents`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/documents`, { headers: getHeaders() });
     if (!res.ok) return [];
     return res.json();
   },
 
   getCaseGraph: async (caseId: string): Promise<GraphPayload> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/graph`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/graph`, { headers: getHeaders() });
     if (!res.ok) throw new Error(`Failed to load graph for case ${caseId}`);
     const data = await res.json();
 
@@ -176,13 +219,13 @@ export const realClient = {
   },
 
   getDocumentRedactions: async (docId: string): Promise<RedactionBox[]> => {
-    const res = await fetch(`${BASE_URL}/documents/${docId}/redactions`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/documents/${docId}/redactions`, { headers: getHeaders() });
     if (!res.ok) return [];
     return res.json();
   },
 
   getDocumentDownloadUrl: async (docId: string): Promise<string> => {
-    const res = await fetch(`${BASE_URL}/documents/${docId}/download`, { headers: getHeaders() });
+    const res = await authFetch(`${BASE_URL}/documents/${docId}/download`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to get download URL');
     const data = await res.json();
     return data.presigned_url;
@@ -192,8 +235,8 @@ export const realClient = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('auth_token');
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/documents`, {
+    const token = getAuthToken();
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/documents`, {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
@@ -205,7 +248,7 @@ export const realClient = {
   },
 
   triggerAnchor: async (caseId: string): Promise<{ batch_id: string; status: string }> => {
-    const res = await fetch(`${BASE_URL}/cases/${caseId}/anchor`, {
+    const res = await authFetch(`${BASE_URL}/cases/${caseId}/anchor`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -217,7 +260,7 @@ export const realClient = {
   },
 
   verifyNodeHash: async (hash: string): Promise<VerificationResult> => {
-    const res = await fetch(`${BASE_URL}/anchors/verify?hash=${encodeURIComponent(hash)}`, {
+    const res = await authFetch(`${BASE_URL}/anchors/verify?hash=${encodeURIComponent(hash)}`, {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Integrity verification check failed');

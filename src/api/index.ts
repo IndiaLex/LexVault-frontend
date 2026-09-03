@@ -36,15 +36,16 @@ export const api = {
     }
   },
 
+  isTokenValid: (): boolean => {
+    if (USE_MOCK) return true;
+    return realClient.isTokenValid();
+  },
+
   getCurrentUser: async (fallbackRole: UserRole = 'officer'): Promise<User> => {
     if (USE_MOCK) {
       return mockClient.mockUsers[fallbackRole];
     }
-    try {
-      return await realClient.getCurrentUser();
-    } catch {
-      return mockClient.mockUsers[fallbackRole];
-    }
+    return realClient.getCurrentUser();
   },
 
   getCases: async (): Promise<CaseSummary[]> => {
