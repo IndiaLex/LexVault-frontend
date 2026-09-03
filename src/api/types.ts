@@ -1,24 +1,70 @@
 export type CustodyEventType =
   | 'UPLOAD'
+  | 'UPLOADED'
   | 'OCR_COMPLETE'
   | 'NER_COMPLETE'
   | 'REDACTED'
   | 'VIEWED'
+  | 'ACCESSED'
+  | 'ACCESS_DENIED'
   | 'DOWNLOADED'
   | 'TRANSFERRED'
   | 'ANCHORED'
   | 'VERIFIED'
-  | 'ROLE_CHANGE';
+  | 'ROLE_CHANGE'
+  | 'VERSION_CREATED';
 
-export type UserRole = 'officer' | 'supervisor' | 'forensic' | 'auditor';
+export type UserRole = 'officer' | 'supervisor' | 'forensic' | 'auditor' | 'admin';
 
 export interface User {
   id: string;
   name: string;
-  badgeNumber: string;
+  badgeNumber?: string;
   role: UserRole;
-  designation: string;
-  policeStation: string;
+  designation?: string;
+  policeStation?: string;
+  username?: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  role: UserRole;
+  name: string;
+  user_id: string;
+}
+
+export interface CaseSummary {
+  id: string;
+  title: string;
+  status: string;
+  created_by?: string;
+  creator_name?: string;
+  created_at?: string;
+  station?: string;
+  acts?: string;
+  documentsCount?: number;
+  lastAction?: string;
+  priority?: string;
+  dossier?: CaseDossier;
+}
+
+export interface CaseCreatePayload {
+  title: string;
+  dossier?: CaseDossier;
+}
+
+export interface DocumentItem {
+  id: string;
+  case_id: string;
+  filename: string;
+  storage_key: string;
+  sha256: string;
+  mime: string;
+  size: number;
+  uploaded_by: string;
+  uploaded_at: string;
+  current_version: number;
 }
 
 export interface CaseDossier {
@@ -101,10 +147,11 @@ export interface RedactionBox {
 
 export interface VerificationResult {
   valid: boolean;
-  merkle_root: string;
-  tx_hash: string;
-  block_number: number;
-  chain_id: number;
-  proof: string[];
-  explorer_url: string;
+  merkle_root?: string;
+  tx_hash?: string;
+  block_number?: number;
+  chain_id?: number | string;
+  proof?: string[];
+  explorer_url?: string;
+  reason?: string;
 }

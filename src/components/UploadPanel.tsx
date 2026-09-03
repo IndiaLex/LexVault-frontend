@@ -2,27 +2,36 @@ import React, { useState } from 'react';
 import { Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 interface UploadPanelProps {
-  onUploadSimulate: (fileName: string) => void;
+  onUploadSimulate?: (fileName: string) => void;
+  onUploadFile?: (file: File) => Promise<void> | void;
   onAnchorSimulate: () => void;
   isAnchoring?: boolean;
 }
 
 export const UploadPanel: React.FC<UploadPanelProps> = ({
   onUploadSimulate,
+  onUploadFile,
   onAnchorSimulate,
   isAnchoring = false,
 }) => {
   const [uploading, setUploading] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setTimeout(() => {
-      onUploadSimulate(file.name);
+    try {
+      if (onUploadFile) {
+        await onUploadFile(file);
+      } else if (onUploadSimulate) {
+        onUploadSimulate(file.name);
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
       setUploading(false);
       e.target.value = '';
-    }, 800);
+    }
   };
 
   return (

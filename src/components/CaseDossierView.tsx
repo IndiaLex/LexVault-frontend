@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { CaseDossier, User } from '../api/types';
 import {
   UserX,
@@ -13,14 +13,20 @@ import {
 interface CaseDossierViewProps {
   dossier: CaseDossier;
   user: User;
+  onUpdateDossier?: (updated: CaseDossier) => void;
 }
 
-export const CaseDossierView: React.FC<CaseDossierViewProps> = ({ dossier, user }) => {
+export const CaseDossierView: React.FC<CaseDossierViewProps> = ({ dossier, user, onUpdateDossier }) => {
   const [subTab, setSubTab] = useState<'dossier' | 'diary' | 'malkhana'>('dossier');
   
   // Interactive State for Diary & Property Register
-  const [diaryEntries, setDiaryEntries] = useState(dossier.diaryEntries);
-  const [properties, setProperties] = useState(dossier.propertyRegister);
+  const [diaryEntries, setDiaryEntries] = useState(dossier.diaryEntries || []);
+  const [properties, setProperties] = useState(dossier.propertyRegister || []);
+
+  useEffect(() => {
+    setDiaryEntries(dossier.diaryEntries || []);
+    setProperties(dossier.propertyRegister || []);
+  }, [dossier]);
 
   // Modal controls
   const [showDiaryModal, setShowDiaryModal] = useState(false);
@@ -39,14 +45,18 @@ export const CaseDossierView: React.FC<CaseDossierViewProps> = ({ dossier, user 
     e.preventDefault();
     if (!activityInput) return;
     const newEntry = {
-      dayNumber: diaryEntries.length + 1,
+      dayNumber: (diaryEntries?.length || 0) + 1,
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       activity: activityInput,
       conductedBy: user.name,
       outcome: outcomeInput || 'Recorded into official case diary.',
     };
-    setDiaryEntries([...diaryEntries, newEntry]);
+    const updated = [...diaryEntries, newEntry];
+    setDiaryEntries(updated);
+    if (onUpdateDossier) {
+      onUpdateDossier({ ...dossier, diaryEntries: updated, propertyRegister: properties });
+    }
     setActivityInput('');
     setOutcomeInput('');
     setShowDiaryModal(false);
@@ -56,13 +66,17 @@ export const CaseDossierView: React.FC<CaseDossierViewProps> = ({ dossier, user 
     e.preventDefault();
     if (!propDesc) return;
     const newProp = {
-      propertyId: `PROP-2026-09${properties.length + 1}`,
+      propertyId: `PROP-2026-09${(properties?.length || 0) + 1}`,
       description: propDesc,
       seizedFrom: propSource || 'Crime scene / Investigation area',
       custodyLocation: propLocation,
       sealIntact: true,
     };
-    setProperties([...properties, newProp]);
+    const updated = [...properties, newProp];
+    setProperties(updated);
+    if (onUpdateDossier) {
+      onUpdateDossier({ ...dossier, diaryEntries, propertyRegister: updated });
+    }
     setPropDesc('');
     setPropSource('');
     setShowPropertyModal(false);

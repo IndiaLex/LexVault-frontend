@@ -45,16 +45,58 @@ export const CaseDetailPage: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<'dossier' | 'vault' | 'graph' | 'audit'>('dossier');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('ALL');
 
+  const handleSelectRole = async (role: UserRole) => {
+    setCurrentRole(role);
+    try {
+      const user = await api.switchRole(role);
+      setCurrentUser(user);
+    } catch {
+      setCurrentUser(mockUsers[role]);
+    }
+  };
+
   useEffect(() => {
-    setCurrentUser(mockUsers[currentRole]);
-  }, [currentRole]);
+    api.getCurrentUser().then((user) => {
+      setCurrentUser(user);
+      setCurrentRole(user.role);
+    }).catch(() => {
+      setCurrentUser(mockUsers[currentRole]);
+    });
+  }, []);
+
+  const handleUpdateDossier = async (updated: CaseDossier) => {
+    setDossier(updated);
+    try {
+      await api.updateCaseDossier(caseId, updated);
+    } catch (err) {
+      console.error('Failed to update case dossier in DB:', err);
+    }
+  };
+
+  const refreshGraph = async () => {
+    try {
+      const data = await api.getCaseGraph(caseId);
+      setGraphData(data);
+    } catch (err) {
+      console.error('Failed to load graph:', err);
+    }
+  };
 
   useEffect(() => {
     api.getCaseDossier(caseId).then(setDossier);
-    api.getCaseGraph(caseId).then((data) => {
-      setGraphData(data);
+    refreshGraph();
+
+    api.getCaseDocuments(caseId).then((docs) => {
+      if (docs.length > 0) {
+        api.getDocumentRedactions(docs[0].id).then(setRedactionBoxes);
+      } else {
+        api.getDocumentRedactions('doc-fir-001').then(setRedactionBoxes);
+      }
     });
-    api.getDocumentRedactions('doc-fir-001').then(setRedactionBoxes);
+
+    // Auto-poll graph every 3 seconds to catch background AI completion & anchor confirmations
+    const interval = setInterval(refreshGraph, 3000);
+    return () => clearInterval(interval);
   }, [caseId]);
 
   const filteredNodes = useMemo(() => {
@@ -72,64 +114,38 @@ export const CaseDetailPage: React.FC = () => {
     );
   }, [graphData, filteredNodes, selectedTypeFilter]);
 
-  const handleUploadSimulate = (fileName: string) => {
-    if (!graphData) return;
-    const docId = `doc-evid-${Date.now().toString().slice(-3)}`;
-    const uploadId = `node-${Date.now()}`;
-    const ocrId = `node-${Date.now() + 1}`;
-
-    const newNodes: GraphNodeData[] = [
-      ...graphData.nodes,
-      {
-        id: uploadId,
-        lane: docId,
-        type: 'UPLOAD',
-        label: `${fileName} Seized & Filed`,
-        actor: currentUser.name,
-        timestamp: new Date().toISOString(),
-        hash: '9f83c6b412fa09de53acb8896172ba21',
-        anchored: false,
-        tags: ['New Evidence', 'Pending Amoy Seal'],
-      },
-      {
-        id: ocrId,
-        lane: docId,
-        type: 'OCR_COMPLETE',
-        label: 'OCR & PII Extraction',
-        actor: 'LexVault-AI',
-        timestamp: new Date().toISOString(),
-        hash: '3a7b9c10825ebfdc721998341ad90241',
-        anchored: false,
-        tags: ['Processed'],
-      },
-    ];
-
-    setGraphData({
-      nodes: newNodes,
-      edges: [
-        ...graphData.edges,
-        { id: `edge-${uploadId}-${ocrId}`, source: uploadId, target: ocrId },
-      ],
-    });
+  const handleUploadFile = async (file: File) => {
+    try {
+      await api.uploadDocument(caseId, file);
+      // Immediately refresh graph to pick up new node
+      await refreshGraph();
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      alert(err.message || 'File upload failed');
+    }
   };
 
-  const handleAnchorSimulate = () => {
-    if (!graphData) return;
+  const handleAnchor = async () => {
     setIsAnchoring(true);
-    setTimeout(() => {
-      setGraphData({
-        ...graphData,
-        nodes: graphData.nodes.map((n) => ({ ...n, anchored: true })),
-      });
+    try {
+      await api.triggerAnchor(caseId);
+      // Wait briefly and refresh
+      setTimeout(async () => {
+        await refreshGraph();
+        setIsAnchoring(false);
+      }, 1000);
+    } catch (err: any) {
+      console.error('Anchor trigger failed:', err);
+      alert(err.message || 'Anchor trigger failed');
       setIsAnchoring(false);
-    }, 1200);
+    }
   };
 
   return (
     <div className="flex flex-col h-screen bg-[#f4f6f9] text-slate-900 font-sans overflow-hidden">
       <GovHeader
         currentUser={currentUser}
-        onSelectRole={setCurrentRole}
+        onSelectRole={handleSelectRole}
         tampered={tampered}
         onToggleTamper={() => setTampered(!tampered)}
       />
@@ -158,8 +174,8 @@ export const CaseDetailPage: React.FC = () => {
         <div className="flex items-center gap-3">
           {currentUser.role !== 'auditor' && (
             <UploadPanel
-              onUploadSimulate={handleUploadSimulate}
-              onAnchorSimulate={handleAnchorSimulate}
+              onUploadFile={handleUploadFile}
+              onAnchorSimulate={handleAnchor}
               isAnchoring={isAnchoring}
             />
           )}
@@ -235,7 +251,7 @@ export const CaseDetailPage: React.FC = () => {
         {/* Central Dynamic Workspace */}
         <main className="flex-1 overflow-y-auto p-6 min-h-0 bg-[#f8fafc]">
           {activeMenu === 'dossier' && (
-            <CaseDossierView dossier={dossier} user={currentUser} />
+            <CaseDossierView dossier={dossier} user={currentUser} onUpdateDossier={handleUpdateDossier} />
           )}
 
           {activeMenu === 'vault' && (

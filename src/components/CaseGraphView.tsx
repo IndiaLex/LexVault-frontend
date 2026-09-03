@@ -22,6 +22,7 @@ interface CaseGraphViewProps {
 
 const EVENT_CONFIG: Record<CustodyEventType, { color: string; icon: React.FC<{ size?: number }> }> = {
   UPLOAD: { color: 'border-blue-500 bg-blue-950/40 text-blue-400', icon: FilePlus },
+  UPLOADED: { color: 'border-blue-500 bg-blue-950/40 text-blue-400', icon: FilePlus },
   OCR_COMPLETE: { color: 'border-slate-500 bg-slate-900/40 text-slate-400', icon: Scan },
   NER_COMPLETE: { color: 'border-slate-500 bg-slate-900/40 text-slate-400', icon: Scan },
   REDACTED: { color: 'border-amber-500 bg-amber-950/40 text-amber-400', icon: EyeOff },
@@ -30,7 +31,10 @@ const EVENT_CONFIG: Record<CustodyEventType, { color: string; icon: React.FC<{ s
   VERIFIED: { color: 'border-emerald-500 bg-emerald-950/40 text-emerald-400', icon: CheckCircle2 },
   ROLE_CHANGE: { color: 'border-rose-500 bg-rose-950/40 text-rose-400', icon: UserCog },
   VIEWED: { color: 'border-cyan-500 bg-cyan-950/40 text-cyan-400', icon: FilePlus },
+  ACCESSED: { color: 'border-cyan-500 bg-cyan-950/40 text-cyan-400', icon: FilePlus },
+  ACCESS_DENIED: { color: 'border-rose-500 bg-rose-950/40 text-rose-400', icon: EyeOff },
   DOWNLOADED: { color: 'border-indigo-500 bg-indigo-950/40 text-indigo-400', icon: FilePlus },
+  VERSION_CREATED: { color: 'border-blue-400 bg-blue-950/40 text-blue-300', icon: FilePlus },
 };
 
 export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
