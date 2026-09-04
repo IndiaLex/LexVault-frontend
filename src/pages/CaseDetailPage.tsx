@@ -17,6 +17,8 @@ import { NodeInspector } from '../components/NodeInspector';
 import { DocumentViewer } from '../components/DocumentViewer';
 import { UploadPanel } from '../components/UploadPanel';
 import { AuditLogView } from '../components/AuditLogView';
+import { CaseChatbotView } from '../components/CaseChatbotView';
+import { FloatingAIChatWidget } from '../components/FloatingAIChatWidget';
 import {
   GitCommit,
   ShieldCheck,
@@ -24,7 +26,8 @@ import {
   Filter,
   FileSpreadsheet,
   FolderOpen,
-  Activity
+  Activity,
+  Bot
 } from 'lucide-react';
 
 export const CaseDetailPage: React.FC = () => {
@@ -42,7 +45,7 @@ export const CaseDetailPage: React.FC = () => {
   const [tampered, setTampered] = useState(false);
   
   // Navigation Menu (Replaces nested tabs)
-  const [activeMenu, setActiveMenu] = useState<'dossier' | 'vault' | 'graph' | 'audit'>('dossier');
+  const [activeMenu, setActiveMenu] = useState<'dossier' | 'vault' | 'graph' | 'audit' | 'chat'>('dossier');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('ALL');
 
   const handleSelectRole = async (role: UserRole) => {
@@ -234,6 +237,25 @@ export const CaseDetailPage: React.FC = () => {
             <FileSpreadsheet size={16} /> Court Legal Audit Ledger
           </button>
 
+          <button
+            onClick={() => setActiveMenu('chat')}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded text-xs font-semibold transition ${
+              activeMenu === 'chat'
+                ? 'bg-[#0b2247] text-white shadow-sm'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-[#0b2247]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Bot size={16} className={activeMenu === 'chat' ? 'text-amber-300' : 'text-[#0b2247]'} />
+              <span>Ask AI Assistant</span>
+            </div>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono ${
+              activeMenu === 'chat' ? 'bg-amber-400 text-slate-900' : 'bg-blue-100 text-blue-800'
+            }`}>
+              AI Copilot
+            </span>
+          </button>
+
           {/* Quick Stats Panel in Sidebar */}
           <div className="mt-auto pt-4 border-t border-slate-200 text-xs space-y-2 text-slate-600 px-1">
             <div className="text-[10px] uppercase font-bold text-slate-400">Ledger Status</div>
@@ -307,7 +329,14 @@ export const CaseDetailPage: React.FC = () => {
           {activeMenu === 'audit' && (
             <AuditLogView nodes={graphData?.nodes || []} caseId={caseId} />
           )}
+
+          {activeMenu === 'chat' && (
+            <CaseChatbotView caseId={caseId} dossier={dossier} />
+          )}
         </main>
+
+        {/* Floating AI Quick-Access Drawer Widget */}
+        <FloatingAIChatWidget caseId={caseId} dossier={dossier} />
 
         {/* Modal Inspector Drawer (Appears only when a node is clicked) */}
         <NodeInspector

@@ -155,3 +155,18 @@ export interface VerificationResult {
   explorer_url?: string;
   reason?: string;
 }
+
+export interface CaseChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  timestamp: string;
+  citations?: Array<{ docId?: string; filename: string; page?: number }>;
+  confidence?: number;
+}
+
+export interface CaseChatResponse {
+  answer: string;
+  citations?: Array<{ docId?: string; filename: string; page?: number }>;
+  confidence?: number;
+}

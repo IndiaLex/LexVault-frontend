@@ -1,6 +1,6 @@
 import * as mockClient from './mockClient';
 import { realClient } from './client';
-import type { UserRole, CaseDossier, GraphPayload, RedactionBox, VerificationResult, CaseSummary, CaseCreatePayload, DocumentItem, LoginResponse, User } from './types';
+import type { UserRole, CaseDossier, GraphPayload, RedactionBox, VerificationResult, CaseSummary, CaseCreatePayload, DocumentItem, LoginResponse, User, CaseChatMessage, CaseChatResponse } from './types';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
@@ -214,5 +214,9 @@ export const api = {
     } catch {
       return mockClient.mockVerify(hash);
     }
+  },
+
+  askCaseAI: async (caseId: string, query: string, history?: CaseChatMessage[]): Promise<CaseChatResponse> => {
+    return realClient.askCaseAI(caseId, query, history);
   },
 };
